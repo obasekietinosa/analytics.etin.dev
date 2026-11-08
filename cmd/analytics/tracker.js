@@ -77,15 +77,18 @@
     var body = JSON.stringify(payload);
     if (navigator.sendBeacon) {
       try {
-        var blob = new Blob([body], { type: "application/json" });
+        // Use CORS-safelisted text/plain so sendBeacon does not trigger preflight
+        var blob = new Blob([body], { type: "text/plain;charset=UTF-8" });
         if (navigator.sendBeacon(url, blob)) return;
       } catch (_e) {}
     }
     fetch(url, {
       method: "POST",
-      headers: { "Content-Type": "application/json" },
+      headers: { "Content-Type": "text/plain;charset=UTF-8" },
       body: body,
       keepalive: true,
+      mode: "cors",
+      credentials: "omit",
     }).catch(function () {});
   }
 

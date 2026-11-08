@@ -24,6 +24,9 @@ func TestTrackerAndCollectHandlers(t *testing.T) {
 	app := &application{
 		config: config{
 			defaultSiteID: "etin.dev",
+			cors: struct{ trustedOrigins []string }{
+				trustedOrigins: []string{"https://etin.dev", "https://www.etin.dev"},
+			},
 		},
 		logger:    log.New(io.Discard, "", 0),
 		store:     data.NewAnalyticsStore(db),
@@ -45,17 +48,21 @@ func TestTrackerAndCollectHandlers(t *testing.T) {
 		t.Fatalf("expected tracker.js to expose window.etinAnalytics")
 	}
 
-	// 2. Verify POST /v1/collect records a pageview
+	// 2. Verify POST /v1/collect records a pageview and sets CORS credentials header for sendBeacon
 	mock.ExpectExec("INSERT INTO pageviews").WillReturnResult(sqlmock.NewResult(1, 1))
 
 	body := bytes.NewBufferString(`{"pageviewId":"22222222-2222-4222-8222-222222222222","path":"/notes/hello-world","referrer":"https://github.com/obasekietinosa"}`)
 	req = httptest.NewRequest(http.MethodPost, "/v1/collect", body)
+	req.Header.Set("Origin", "https://etin.dev")
 	req.Header.Set("User-Agent", "Mozilla/5.0 (Macintosh; Intel Mac OS X 10_15_7) Safari/605.1.15")
-	req.Header.Set("Content-Type", "application/json")
+	req.Header.Set("Content-Type", "text/plain;charset=UTF-8")
 	rec = httptest.NewRecorder()
 	mux.ServeHTTP(rec, req)
 	if rec.Code != http.StatusAccepted {
 		t.Fatalf("expected 202 for /v1/collect, got %d: %s", rec.Code, rec.Body.String())
+	}
+	if rec.Header().Get("Access-Control-Allow-Credentials") != "true" {
+		t.Fatalf("expected Access-Control-Allow-Credentials=true for cross-origin sendBeacon, got %q", rec.Header().Get("Access-Control-Allow-Credentials"))
 	}
 
 	// 3. Verify GET /v1/stats/overview requires admin token
