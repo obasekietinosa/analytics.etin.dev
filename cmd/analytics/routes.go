@@ -9,6 +9,7 @@ func (app *application) routes() http.Handler {
 	mux := http.NewServeMux()
 
 	// Healthcheck & embedded browser collector
+	mux.HandleFunc("GET /{$}", app.healthcheckHandler)
 	mux.HandleFunc("GET /v1/healthcheck", app.healthcheckHandler)
 	mux.HandleFunc("GET /tracker.js", app.trackerScriptHandler)
 

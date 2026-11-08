@@ -335,7 +335,7 @@ func (s *AnalyticsStore) GetOverviewStats(ctx context.Context, siteID string, da
 			COUNT(*),
 			COUNT(DISTINCT COALESCE(visitor_id, visitor_hash)),
 			COUNT(DISTINCT CASE WHEN is_returning THEN COALESCE(visitor_id, visitor_hash) END),
-			COUNT(CASE WHEN path LIKE '/notes/%' THEN 1 END),
+			COUNT(CASE WHEN path LIKE '/note/%' OR path LIKE '/notes%' THEN 1 END),
 			COALESCE(AVG(duration_seconds), 0),
 			COALESCE(AVG(max_scroll_depth), 0)
 		 FROM pageviews
