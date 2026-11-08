@@ -1,3 +1,4 @@
+cmd/analytics/build/*
 bin/
 *.exe
 *.out
